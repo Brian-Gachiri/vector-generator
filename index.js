@@ -185,14 +185,17 @@ function splitBySentences(text, maxTokens) {
 async function generateEmbeddingsForLargeText(text) {
   const chunks = splitTextIntoChunks(text, 8000); // Ensure chunks fit within the model's context limit
   logChunkDetails(chunks);
-  const embeddings = [];
+  const data = [];
 
   for (const chunk of chunks) {
     const embedding = await generateEmbedding(chunk);
-    embeddings.push(embedding);
+    data.push({
+      embeddings: embedding,
+      text: chunk
+    });
   }
 
-  return embeddings;
+  return data;
 }
 
 /**
@@ -257,12 +260,13 @@ async function processMarkdownFolder(folderPath) {
 
           const vectors = embeddings.map((embedding, index) => ({
             id: `${fileName}-${index}`,
-            values: embedding,
+            values: embedding.embeddings,
             metadata: {
               filePath,
               fileName,
               folder: path.dirname(filePath),
               chunkIndex: index,
+              text: embedding.text
             },
           }));
 
